@@ -1,0 +1,61 @@
+specVersion: 1.2.0
+schema:
+  file: ./schema.graphql
+
+dataSources:
+  - kind: ethereum
+    name: ChallengeFactory
+    network: base-sepolia
+    source:
+      address: "0x0000000000000000000000000000000000000000"
+      abi: ChallengeFactory
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Challenge
+        - User
+        - ProtocolStats
+      abis:
+        - name: ChallengeFactory
+          file: ./abis/ChallengeFactory.json
+      eventHandlers:
+        - event: GameCreated(indexed uint256,indexed address,uint256,uint64,uint256,uint16)
+          handler: handleFactoryGameCreated
+      file: ./src/mappings/factory.ts
+
+  - kind: ethereum
+    name: ChallengeGame
+    network: base-sepolia
+    source:
+      address: "0x0000000000000000000000000000000000000000"
+      abi: ChallengeGame
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Challenge
+        - Guess
+        - User
+        - ProtocolStats
+      abis:
+        - name: ChallengeGame
+          file: ./abis/ChallengeGame.json
+      eventHandlers:
+        - event: GuessSubmitted(indexed uint256,indexed uint256,indexed address,uint256,uint256)
+          handler: handleGuessSubmitted
+        - event: GuessResolved(indexed uint256,indexed uint256,indexed address,bool,uint256,uint256,uint256,uint256,bool)
+          handler: handleGuessResolved
+        - event: GameSolved(indexed uint256,indexed address,uint256,uint256)
+          handler: handleGameSolved
+        - event: GameExpired(indexed uint256,uint256)
+          handler: handleGameExpired
+        - event: GameCancelled(indexed uint256,uint256)
+          handler: handleGameCancelled
+        - event: CreatorRemainderWithdrawn(indexed uint256,uint256)
+          handler: handleCreatorRemainderWithdrawn
+      file: ./src/mappings/game.ts

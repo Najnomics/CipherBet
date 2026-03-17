@@ -1,0 +1,20 @@
+{
+  "name": "cipherbet-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CipherBet Protocol monorepo",
+  "packageManager": "pnpm@10.30.1",
+  "scripts": {
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "contracts:test": "pnpm --filter @cipherbet/contracts test",
+    "contracts:coverage": "pnpm --filter @cipherbet/contracts coverage",
+    "contracts:fuzz": "pnpm --filter @cipherbet/contracts fuzz",
+    "contracts:invariant": "pnpm --filter @cipherbet/contracts invariant",
+    "frontend:dev": "pnpm --filter @cipherbet/frontend dev",
+    "subgraph:codegen": "pnpm --filter @cipherbet/subgraph codegen",
+    "subgraph:build": "pnpm --filter @cipherbet/subgraph build"
+  }
+}

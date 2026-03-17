@@ -1,0 +1,32 @@
+# Node
+node_modules/
+.pnpm-store/
+.npm/
+
+# Foundry
+packages/contracts/lib/
+packages/contracts/cache/
+packages/contracts/out/
+packages/contracts/broadcast/
+packages/contracts/.gas-snapshot
+
+# Frontend
+packages/frontend/.next/
+packages/frontend/.turbo/
+packages/frontend/coverage/
+
+# SDK/Subgraph
+packages/sdk/dist/
+packages/subgraph/generated/
+packages/subgraph/build/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# macOS
+.DS_Store

@@ -1,0 +1,17 @@
+{
+  "name": "@cipherbet/subgraph",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy:local": "echo 'Configure auth and run graph deploy --studio <slug>'",
+    "lint": "echo 'No subgraph lints configured'",
+    "test": "echo 'No subgraph tests yet'",
+    "typecheck": "echo 'Subgraph mappings are typechecked during graph codegen/build'"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.98.1",
+    "@graphprotocol/graph-ts": "^0.38.2"
+  }
+}

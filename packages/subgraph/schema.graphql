@@ -1,0 +1,60 @@
+type Challenge @entity(immutable: false) {
+  id: ID!
+  creator: User!
+  creatorStake: BigInt!
+  creatorStakeEscrowed: BigInt!
+  playerStakeFixed: BigInt!
+  slashBps: Int!
+  payoutBps: Int!
+  deadline: BigInt!
+  active: Boolean!
+  solved: Boolean!
+  cancelled: Boolean!
+  expired: Boolean!
+  winner: User
+  winningGuess: Guess
+  createdAt: BigInt!
+  totalPlayerStaked: BigInt!
+  protocolFeesAccrued: BigInt!
+  attemptCount: BigInt!
+  unresolvedGuesses: BigInt!
+  guesses: [Guess!]! @derivedFrom(field: "challenge")
+}
+
+type Guess @entity(immutable: false) {
+  id: ID!
+  challenge: Challenge!
+  player: User!
+  stake: BigInt!
+  decryptRequestId: BigInt!
+  timestamp: BigInt!
+  state: String!
+  won: Boolean
+  payout: BigInt
+  slash: BigInt
+  protocolFee: BigInt
+  playerRefund: BigInt
+  resolvedAfterGameSolved: Boolean
+  submittedAtBlock: BigInt!
+  resolvedAtBlock: BigInt
+}
+
+type User @entity(immutable: false) {
+  id: ID!
+  createdChallenges: BigInt!
+  guessesSubmitted: BigInt!
+  guessesWon: BigInt!
+  totalPayoutWon: BigInt!
+  totalSlashed: BigInt!
+}
+
+type ProtocolStats @entity(immutable: false) {
+  id: ID!
+  totalChallenges: BigInt!
+  activeChallenges: BigInt!
+  solvedChallenges: BigInt!
+  expiredChallenges: BigInt!
+  cancelledChallenges: BigInt!
+  totalGuesses: BigInt!
+  totalProtocolFees: BigInt!
+}

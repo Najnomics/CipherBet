@@ -1,0 +1,17 @@
+{
+  "name": "@cipherbet/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test -vv",
+    "fuzz": "forge test --match-test testFuzz_ -vv",
+    "invariant": "forge test --match-test invariant_ -vv",
+    "coverage": "forge coverage --report summary --ir-minimum",
+    "lint": "forge fmt --check",
+    "format": "forge fmt"
+  },
+  "dependencies": {
+    "@fhenixprotocol/cofhe-contracts": "^0.1.0"
+  }
+}

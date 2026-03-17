@@ -1,0 +1,161 @@
+/Users/najnomics/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+'forge clean' running (wd: /Users/najnomics/feb-march2026/cypherbet/packages/contracts)
+'forge config --json' running
+'forge build --build-info --skip ./test/** ./script/** --force' running (wd: /Users/najnomics/feb-march2026/cypherbet/packages/contracts)
+
+Detector: arbitrary-send-eth
+ProtocolTreasury.withdrawFees(address,uint256) (src/ProtocolTreasury.sol#87-109) sends eth to arbitrary user
+	Dangerous calls:
+	- (success,None) = to.call{value: amount}() (src/ProtocolTreasury.sol#103)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#functions-that-send-ether-to-arbitrary-destinations
+
+Detector: divide-before-multiply
+ChallengeGame._settleLoss(CipherBetTypes.Game,uint256,uint256,CipherBetTypes.Guess) (src/ChallengeGame.sol#512-540) performs a multiplication on the result of a division:
+	- slash = (guessData.stake * uint256(gameData.slashBps)) / CipherBetTypes.BPS_DENOMINATOR (src/ChallengeGame.sol#518-519)
+	- creatorShare = (slash * uint256(gameData.creatorCutBps)) / CipherBetTypes.BPS_DENOMINATOR (src/ChallengeGame.sol#520-521)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#divide-before-multiply
+
+Detector: reentrancy-no-eth
+Reentrancy in ChallengeGame.submitGuess(uint256,InEuint32) (src/ChallengeGame.sol#191-253):
+	External calls:
+	- guessHandle = FHELib.asEuint32AndAllowThis(encryptedGuess) (src/ChallengeGame.sol#225)
+	- winFlagEnc = FHELib.eq(gameData.secretHandle,guessHandle) (src/ChallengeGame.sol#226)
+	- decryptRequestId = FHELib.requestDecrypt(winFlagEnc) (src/ChallengeGame.sol#227)
+	State variables written after the call(s):
+	- s_attemptsByGameByPlayer[gameId][msg.sender] = attempts + 1 (src/ChallengeGame.sol#247)
+	ChallengeGame.s_attemptsByGameByPlayer (src/ChallengeGame.sol#34-35) can be used in cross function reentrancies:
+	- ChallengeGame.getAttemptCount(uint256,address) (src/ChallengeGame.sol#434-439)
+	- gameData.totalPlayerStaked += msg.value (src/ChallengeGame.sol#242)
+	ChallengeGame.s_games (src/ChallengeGame.sol#31) can be used in cross function reentrancies:
+	- ChallengeGame.createChallenge(address,CipherBetTypes.GameParams,InEuint32) (src/ChallengeGame.sol#142-184)
+	- ChallengeGame.getGame(uint256) (src/ChallengeGame.sol#407-411)
+	- gameData.attemptCount += 1 (src/ChallengeGame.sol#243)
+	ChallengeGame.s_games (src/ChallengeGame.sol#31) can be used in cross function reentrancies:
+	- ChallengeGame.createChallenge(address,CipherBetTypes.GameParams,InEuint32) (src/ChallengeGame.sol#142-184)
+	- ChallengeGame.getGame(uint256) (src/ChallengeGame.sol#407-411)
+	- gameData.unresolvedGuesses += 1 (src/ChallengeGame.sol#244)
+	ChallengeGame.s_games (src/ChallengeGame.sol#31) can be used in cross function reentrancies:
+	- ChallengeGame.createChallenge(address,CipherBetTypes.GameParams,InEuint32) (src/ChallengeGame.sol#142-184)
+	- ChallengeGame.getGame(uint256) (src/ChallengeGame.sol#407-411)
+	- gameData.hasGuesses = true (src/ChallengeGame.sol#245)
+	ChallengeGame.s_games (src/ChallengeGame.sol#31) can be used in cross function reentrancies:
+	- ChallengeGame.createChallenge(address,CipherBetTypes.GameParams,InEuint32) (src/ChallengeGame.sol#142-184)
+	- ChallengeGame.getGame(uint256) (src/ChallengeGame.sol#407-411)
+	- s_lastGuessTimestampByGameByPlayer[gameId][msg.sender] = uint64(block.timestamp) (src/ChallengeGame.sol#248)
+	ChallengeGame.s_lastGuessTimestampByGameByPlayer (src/ChallengeGame.sol#36-37) can be used in cross function reentrancies:
+	- ChallengeGame.getLastGuessTimestamp(uint256,address) (src/ChallengeGame.sol#444-449)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-1
+
+Detector: reentrancy-benign
+Reentrancy in ChallengeFactory.createChallenge(CipherBetTypes.GameParams,InEuint32) (src/ChallengeFactory.sol#68-89):
+	External calls:
+	- (gameId,deadline) = i_challengeGame.createChallenge{value: msg.value}(msg.sender,params,encryptedSecret) (src/ChallengeFactory.sol#73-74)
+	State variables written after the call(s):
+	- s_allGameIds.push(gameId) (src/ChallengeFactory.sol#84)
+	- s_challengeMeta[gameId] = ChallengeMeta({creator:msg.sender,createdAt:uint64(block.timestamp),deadline:deadline,exists:true}) (src/ChallengeFactory.sol#76-81)
+	- s_gameIdsByCreator[msg.sender].push(gameId) (src/ChallengeFactory.sol#83)
+Reentrancy in ChallengeGame.createChallenge(address,CipherBetTypes.GameParams,InEuint32) (src/ChallengeGame.sol#142-184):
+	External calls:
+	- secretHandle = FHELib.asEuint32AndAllowThis(encryptedSecret) (src/ChallengeGame.sol#156)
+	State variables written after the call(s):
+	- gameData.creator = creator (src/ChallengeGame.sol#159)
+	- gameData.creatorStakeEscrowed = msg.value (src/ChallengeGame.sol#160)
+	- gameData.playerStakeFixed = params.playerStakeFixed (src/ChallengeGame.sol#161)
+	- gameData.slashBps = params.slashBps (src/ChallengeGame.sol#162)
+	- gameData.creatorCutBps = params.creatorCutBps (src/ChallengeGame.sol#163)
+	- gameData.protocolCutBps = params.protocolCutBps (src/ChallengeGame.sol#164)
+	- gameData.payoutBpsOfCreatorStake = params.payoutBpsOfCreatorStake (src/ChallengeGame.sol#165)
+	- gameData.seqLen = params.seqLen (src/ChallengeGame.sol#166)
+	- gameData.secretHandle = secretHandle (src/ChallengeGame.sol#167)
+	- gameData.deadline = deadline (src/ChallengeGame.sol#168)
+	- gameData.active = true (src/ChallengeGame.sol#169)
+	- gameData.maxAttemptsPerAddress = params.maxAttemptsPerAddress (src/ChallengeGame.sol#170)
+	- gameData.cooldownSeconds = params.cooldownSeconds (src/ChallengeGame.sol#171)
+	- totalCreatorEscrowed += msg.value (src/ChallengeGame.sol#173)
+Reentrancy in ChallengeGame.submitGuess(uint256,InEuint32) (src/ChallengeGame.sol#191-253):
+	External calls:
+	- guessHandle = FHELib.asEuint32AndAllowThis(encryptedGuess) (src/ChallengeGame.sol#225)
+	- winFlagEnc = FHELib.eq(gameData.secretHandle,guessHandle) (src/ChallengeGame.sol#226)
+	- decryptRequestId = FHELib.requestDecrypt(winFlagEnc) (src/ChallengeGame.sol#227)
+	State variables written after the call(s):
+	- s_guessIdsByGame[gameId].push(guessId) (src/ChallengeGame.sol#240)
+	- guessData.player = msg.sender (src/ChallengeGame.sol#231)
+	- guessData.gameId = gameId (src/ChallengeGame.sol#232)
+	- guessData.stake = msg.value (src/ChallengeGame.sol#233)
+	- guessData.guessHandle = guessHandle (src/ChallengeGame.sol#234)
+	- guessData.winFlagEnc = winFlagEnc (src/ChallengeGame.sol#235)
+	- guessData.decryptRequestId = decryptRequestId (src/ChallengeGame.sol#236)
+	- guessData.state = CipherBetTypes.GuessState.EVALUATING (src/ChallengeGame.sol#237)
+	- guessData.timestamp = block.timestamp (src/ChallengeGame.sol#238)
+	- guessId = ++ s_lastGuessId (src/ChallengeGame.sol#229)
+	- totalPendingPlayerStake += msg.value (src/ChallengeGame.sol#250)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-2
+
+Detector: reentrancy-events
+Reentrancy in ChallengeGame.createChallenge(address,CipherBetTypes.GameParams,InEuint32) (src/ChallengeGame.sol#142-184):
+	External calls:
+	- secretHandle = FHELib.asEuint32AndAllowThis(encryptedSecret) (src/ChallengeGame.sol#156)
+	Event emitted after the call(s):
+	- GameCreated(gameId,creator,msg.value,deadline,params.playerStakeFixed,params.slashBps,params.payoutBpsOfCreatorStake) (src/ChallengeGame.sol#175-183)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-3
+
+Detector: timestamp
+ChallengeGame.submitGuess(uint256,InEuint32) (src/ChallengeGame.sol#191-253) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp >= gameData.deadline (src/ChallengeGame.sol#205)
+	- gameData.cooldownSeconds != 0 && lastGuessTimestamp != 0 && block.timestamp < uint256(lastGuessTimestamp) + gameData.cooldownSeconds (src/ChallengeGame.sol#219-220)
+ChallengeGame.reclaimExpired(uint256) (src/ChallengeGame.sol#335-366) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < gameData.deadline (src/ChallengeGame.sol#351)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+
+Detector: pragma
+7 different versions of Solidity are used:
+	- Version constraint ^0.8.20 is used by:
+		-^0.8.20 (lib/openzeppelin-contracts/contracts/access/AccessControl.sol#4)
+		-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Context.sol#4)
+		-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Panic.sol#4)
+		-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol#4)
+		-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#5)
+		-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol#4)
+		-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#4)
+		-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol#5)
+		-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/math/SignedMath.sol#4)
+	- Version constraint >=0.8.4 is used by:
+		->=0.8.4 (lib/openzeppelin-contracts/contracts/access/IAccessControl.sol#4)
+	- Version constraint ^0.8.24 is used by:
+		-^0.8.24 (lib/openzeppelin-contracts/contracts/utils/Bytes.sol#4)
+		-^0.8.24 (lib/openzeppelin-contracts/contracts/utils/Strings.sol#4)
+	- Version constraint >=0.4.16 is used by:
+		->=0.4.16 (lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol#4)
+	- Version constraint >=0.8.19<0.9.0 is used by:
+		->=0.8.19<0.9.0 (node_modules/@fhenixprotocol/cofhe-contracts/FHE.sol#4)
+	- Version constraint >=0.8.25<0.9.0 is used by:
+		->=0.8.25<0.9.0 (node_modules/@fhenixprotocol/cofhe-contracts/ICofhe.sol#2)
+	- Version constraint 0.8.26 is used by:
+		-0.8.26 (src/ChallengeFactory.sol#2)
+		-0.8.26 (src/ChallengeGame.sol#2)
+		-0.8.26 (src/ProtocolTreasury.sol#2)
+		-0.8.26 (src/RulesModule.sol#2)
+		-0.8.26 (src/interfaces/IChallengeGame.sol#2)
+		-0.8.26 (src/interfaces/IProtocolTreasury.sol#2)
+		-0.8.26 (src/interfaces/IRulesModule.sol#2)
+		-0.8.26 (src/libraries/CipherBetTypes.sol#2)
+		-0.8.26 (src/libraries/FHELib.sol#2)
+		-0.8.26 (src/mocks/MockTaskManager.sol#2)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#different-pragma-directives-are-used
+
+Detector: low-level-calls
+Low level call in ChallengeGame._safeTransferETH(address,uint256) (src/ChallengeGame.sol#542-554):
+	- (success,None) = recipient.call{value: amount}() (src/ChallengeGame.sol#550)
+Low level call in ProtocolTreasury.withdrawFees(address,uint256) (src/ProtocolTreasury.sol#87-109):
+	- (success,None) = to.call{value: amount}() (src/ProtocolTreasury.sol#103)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls
+
+Detector: naming-convention
+Variable ChallengeFactory.i_challengeGame (src/ChallengeFactory.sol#18) is not in mixedCase
+Variable ChallengeGame.i_rulesModule (src/ChallengeGame.sol#22) is not in mixedCase
+Variable ChallengeGame.i_protocolTreasury (src/ChallengeGame.sol#23) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+packages/contracts analyzed (35 contracts with 100 detectors), 15 result(s) found

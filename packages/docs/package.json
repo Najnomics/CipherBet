@@ -1,0 +1,11 @@
+{
+  "name": "@cipherbet/docs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Docs are markdown artifacts'",
+    "lint": "echo 'No docs linter configured'",
+    "test": "echo 'No docs tests configured'",
+    "typecheck": "echo 'N/A'"
+  }
+}
