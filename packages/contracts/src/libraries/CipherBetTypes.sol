@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {ebool, euint32} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
+import {euint8, euint32} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 
 library CipherBetTypes {
     uint256 internal constant BPS_DENOMINATOR = 10_000;
@@ -52,9 +52,11 @@ library CipherBetTypes {
         uint256 gameId;
         uint256 stake;
         euint32 guessHandle;
-        ebool winFlagEnc;
-        uint256 decryptRequestId;
+        euint8 exactMatchesEnc;
+        euint8 partialMatchesEnc;
         GuessState state;
         uint256 timestamp;
+        uint8 exactMatches;
+        uint8 partialMatches;
     }
 }

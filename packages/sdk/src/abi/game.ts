@@ -69,7 +69,8 @@ export const challengeGameAbi = [
       { indexed: true, name: "guessId", type: "uint256" },
       { indexed: true, name: "player", type: "address" },
       { indexed: false, name: "stake", type: "uint256" },
-      { indexed: false, name: "decryptRequestId", type: "uint256" },
+      { indexed: false, name: "exactMatchesDecryptId", type: "uint256" },
+      { indexed: false, name: "partialMatchesDecryptId", type: "uint256" },
     ],
     anonymous: false,
   },
@@ -81,6 +82,8 @@ export const challengeGameAbi = [
       { indexed: true, name: "guessId", type: "uint256" },
       { indexed: true, name: "player", type: "address" },
       { indexed: false, name: "won", type: "bool" },
+      { indexed: false, name: "exactMatches", type: "uint8" },
+      { indexed: false, name: "partialMatches", type: "uint8" },
       { indexed: false, name: "payout", type: "uint256" },
       { indexed: false, name: "slash", type: "uint256" },
       { indexed: false, name: "protocolFee", type: "uint256" },
@@ -88,5 +91,39 @@ export const challengeGameAbi = [
       { indexed: false, name: "resolvedAfterGameSolved", type: "bool" },
     ],
     anonymous: false,
+  },
+  {
+    type: "event",
+    name: "GameSolved",
+    inputs: [
+      { indexed: true, name: "gameId", type: "uint256" },
+      { indexed: true, name: "winner", type: "address" },
+      { indexed: false, name: "payout", type: "uint256" },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "GameExpired",
+    inputs: [
+      { indexed: true, name: "gameId", type: "uint256" },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "GameCancelled",
+    inputs: [
+      { indexed: true, name: "gameId", type: "uint256" },
+      { indexed: true, name: "creator", type: "address" },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "function",
+    name: "gameCount",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
   },
 ] as const;

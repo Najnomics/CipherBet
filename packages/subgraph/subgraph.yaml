@@ -46,9 +46,9 @@ dataSources:
         - name: ChallengeGame
           file: ./abis/ChallengeGame.json
       eventHandlers:
-        - event: GuessSubmitted(indexed uint256,indexed uint256,indexed address,uint256,uint256)
+        - event: GuessSubmitted(indexed uint256,indexed uint256,indexed address,uint256,uint256,uint256)
           handler: handleGuessSubmitted
-        - event: GuessResolved(indexed uint256,indexed uint256,indexed address,bool,uint256,uint256,uint256,uint256,bool)
+        - event: GuessResolved(indexed uint256,indexed uint256,indexed address,bool,uint8,uint8,uint256,uint256,uint256,uint256,bool)
           handler: handleGuessResolved
         - event: GameSolved(indexed uint256,indexed address,uint256,uint256)
           handler: handleGameSolved

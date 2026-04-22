@@ -57,7 +57,8 @@ export function handleGuessSubmitted(event: GuessSubmitted): void {
   guess.challenge = challengeId;
   guess.player = player.id;
   guess.stake = event.params.stake;
-  guess.decryptRequestId = event.params.decryptRequestId;
+  guess.exactMatchesDecryptId = event.params.exactMatchesDecryptId;
+  guess.partialMatchesDecryptId = event.params.partialMatchesDecryptId;
   guess.timestamp = event.block.timestamp;
   guess.state = "EVALUATING";
   guess.submittedAtBlock = event.block.number;
@@ -85,6 +86,8 @@ export function handleGuessResolved(event: GuessResolved): void {
 
   guess.state = "FINALIZED";
   guess.won = event.params.won;
+  guess.exactMatches = event.params.exactMatches;
+  guess.partialMatches = event.params.partialMatches;
   guess.payout = event.params.payout;
   guess.slash = event.params.slash;
   guess.protocolFee = event.params.protocolFee;

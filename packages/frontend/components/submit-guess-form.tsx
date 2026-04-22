@@ -34,6 +34,7 @@ export function SubmitGuessForm() {
       const encryptedGuess = await encryptGuess(guess.split("").map((d) => Number(d)));
 
       const hash = await writeSubmitGuess(
+        publicClient,
         walletClient,
         APP_CONFIG.gameAddress,
         BigInt(gameId),

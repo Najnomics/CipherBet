@@ -65,6 +65,7 @@ export function CreateChallengeForm() {
       };
 
       const hash = await writeCreateChallenge(
+        publicClient,
         walletClient,
         APP_CONFIG.factoryAddress,
         params,

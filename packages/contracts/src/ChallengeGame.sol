@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {InEuint32, ebool, euint32} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
+import {InEuint32, euint8, euint32} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 import {AccessControl} from "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import {IChallengeGame} from "src/interfaces/IChallengeGame.sol";
@@ -50,13 +50,16 @@ contract ChallengeGame is AccessControl, ReentrancyGuard, IChallengeGame {
         uint256 indexed guessId,
         address indexed player,
         uint256 stake,
-        uint256 decryptRequestId
+        uint256 exactMatchesDecryptId,
+        uint256 partialMatchesDecryptId
     );
     event GuessResolved(
         uint256 indexed gameId,
         uint256 indexed guessId,
         address indexed player,
         bool won,
+        uint8 exactMatches,
+        uint8 partialMatches,
         uint256 payout,
         uint256 slash,
         uint256 protocolFee,
@@ -223,8 +226,10 @@ contract ChallengeGame is AccessControl, ReentrancyGuard, IChallengeGame {
         }
 
         euint32 guessHandle = FHELib.asEuint32AndAllowThis(encryptedGuess);
-        ebool winFlagEnc = FHELib.eq(gameData.secretHandle, guessHandle);
-        uint256 decryptRequestId = FHELib.requestDecrypt(winFlagEnc);
+        (euint8 exactMatchesEnc, euint8 partialMatchesEnc) =
+            FHELib.scoreMastermind(gameData.secretHandle, guessHandle, gameData.seqLen);
+        uint256 exactMatchesDecryptId = FHELib.requestDecrypt(exactMatchesEnc);
+        uint256 partialMatchesDecryptId = FHELib.requestDecrypt(partialMatchesEnc);
 
         guessId = ++s_lastGuessId;
         CipherBetTypes.Guess storage guessData = s_guesses[guessId];
@@ -232,8 +237,8 @@ contract ChallengeGame is AccessControl, ReentrancyGuard, IChallengeGame {
         guessData.gameId = gameId;
         guessData.stake = msg.value;
         guessData.guessHandle = guessHandle;
-        guessData.winFlagEnc = winFlagEnc;
-        guessData.decryptRequestId = decryptRequestId;
+        guessData.exactMatchesEnc = exactMatchesEnc;
+        guessData.partialMatchesEnc = partialMatchesEnc;
         guessData.state = CipherBetTypes.GuessState.EVALUATING;
         guessData.timestamp = block.timestamp;
 
@@ -249,7 +254,14 @@ contract ChallengeGame is AccessControl, ReentrancyGuard, IChallengeGame {
 
         totalPendingPlayerStake += msg.value;
 
-        emit GuessSubmitted(gameId, guessId, msg.sender, msg.value, decryptRequestId);
+        emit GuessSubmitted(
+            gameId,
+            guessId,
+            msg.sender,
+            msg.value,
+            exactMatchesDecryptId,
+            partialMatchesDecryptId
+        );
     }
 
     /**
@@ -272,28 +284,41 @@ contract ChallengeGame is AccessControl, ReentrancyGuard, IChallengeGame {
             revert ChallengeGame__GuessNotEvaluating();
         }
 
-        bool win = FHELib.getBoolResultOrRevert(guessData.winFlagEnc);
-
         CipherBetTypes.Game storage gameData = s_games[gameId];
+        uint8 exactMatches = FHELib.getUint8ResultOrRevert(guessData.exactMatchesEnc);
+        uint8 partialMatches = FHELib.getUint8ResultOrRevert(guessData.partialMatchesEnc);
+        bool win = exactMatches == gameData.seqLen;
 
         guessData.state = CipherBetTypes.GuessState.FINALIZED;
+        guessData.exactMatches = exactMatches;
+        guessData.partialMatches = partialMatches;
         gameData.unresolvedGuesses -= 1;
         totalPendingPlayerStake -= guessData.stake;
 
         if (gameData.solved) {
             _safeTransferEth(payable(guessData.player), guessData.stake);
             emit GuessResolved(
-                gameId, guessId, guessData.player, false, 0, 0, 0, guessData.stake, true
+                gameId,
+                guessId,
+                guessData.player,
+                false,
+                exactMatches,
+                partialMatches,
+                0,
+                0,
+                0,
+                guessData.stake,
+                true
             );
             return;
         }
 
         if (win) {
-            _settleWin(gameData, gameId, guessId, guessData);
+            _settleWin(gameData, gameId, guessId, guessData, exactMatches, partialMatches);
             return;
         }
 
-        _settleLoss(gameData, gameId, guessId, guessData);
+        _settleLoss(gameData, gameId, guessId, guessData, exactMatches, partialMatches);
     }
 
     /**
@@ -489,7 +514,9 @@ contract ChallengeGame is AccessControl, ReentrancyGuard, IChallengeGame {
         CipherBetTypes.Game storage gameData,
         uint256 gameId,
         uint256 guessId,
-        CipherBetTypes.Guess storage guessData
+        CipherBetTypes.Guess storage guessData,
+        uint8 exactMatches,
+        uint8 partialMatches
     ) internal {
         uint256 payout = (gameData.creatorStakeEscrowed * uint256(gameData.payoutBpsOfCreatorStake))
             / CipherBetTypes.BPS_DENOMINATOR;
@@ -505,7 +532,17 @@ contract ChallengeGame is AccessControl, ReentrancyGuard, IChallengeGame {
 
         emit GameSolved(gameId, guessData.player, payout, guessId);
         emit GuessResolved(
-            gameId, guessId, guessData.player, true, payout, 0, 0, guessData.stake, false
+            gameId,
+            guessId,
+            guessData.player,
+            true,
+            exactMatches,
+            partialMatches,
+            payout,
+            0,
+            0,
+            guessData.stake,
+            false
         );
     }
 
@@ -513,7 +550,9 @@ contract ChallengeGame is AccessControl, ReentrancyGuard, IChallengeGame {
         CipherBetTypes.Game storage gameData,
         uint256 gameId,
         uint256 guessId,
-        CipherBetTypes.Guess storage guessData
+        CipherBetTypes.Guess storage guessData,
+        uint8 exactMatches,
+        uint8 partialMatches
     ) internal {
         uint256 slash =
             (guessData.stake * uint256(gameData.slashBps)) / CipherBetTypes.BPS_DENOMINATOR;
@@ -535,7 +574,17 @@ contract ChallengeGame is AccessControl, ReentrancyGuard, IChallengeGame {
         }
 
         emit GuessResolved(
-            gameId, guessId, guessData.player, false, 0, slash, protocolFee, playerRefund, false
+            gameId,
+            guessId,
+            guessData.player,
+            false,
+            exactMatches,
+            partialMatches,
+            0,
+            slash,
+            protocolFee,
+            playerRefund,
+            false
         );
     }
 

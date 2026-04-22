@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {InEuint32} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
+import {InEuint32, euint8} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 import {Utils} from "@fhenixprotocol/cofhe-contracts/ICofhe.sol";
 import {Test} from "forge-std/Test.sol";
 import {ChallengeFactory} from "src/ChallengeFactory.sol";
@@ -90,6 +90,8 @@ contract ChallengeGameUnitTest is Test {
         CipherBetTypes.Guess memory guess = game.getGuess(guessId);
 
         assertEq(uint8(guess.state), uint8(CipherBetTypes.GuessState.FINALIZED));
+        assertEq(guess.exactMatches, 1);
+        assertEq(guess.partialMatches, 0);
         assertEq(g.creatorStakeEscrowed, CREATOR_STAKE + creatorShare);
         assertEq(address(treasury).balance, protocolFee);
         assertEq(player.balance, balanceBefore - PLAYER_STAKE + refund);
@@ -110,8 +112,11 @@ contract ChallengeGameUnitTest is Test {
         uint256 payout = (CREATOR_STAKE * params.payoutBpsOfCreatorStake) / 10_000;
 
         CipherBetTypes.Game memory g = game.getGame(gameId);
+        CipherBetTypes.Guess memory guess = game.getGuess(guessId);
         assertTrue(g.solved);
         assertFalse(g.active);
+        assertEq(guess.exactMatches, 4);
+        assertEq(guess.partialMatches, 0);
         assertEq(g.creatorStakeEscrowed, CREATOR_STAKE - payout);
         assertEq(player.balance, balanceBefore + payout);
     }
@@ -174,11 +179,12 @@ contract ChallengeGameUnitTest is Test {
         uint256 guessId = game.submitGuess{value: PLAYER_STAKE}(gameId, _encryptPacked(1234));
 
         CipherBetTypes.Guess memory guess = game.getGuess(guessId);
-        taskManager.setDecryptReady(guess.decryptRequestId, false);
+        uint256 decryptRequestId = uint256(euint8.unwrap(guess.exactMatchesEnc));
+        taskManager.setDecryptReady(decryptRequestId, false);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                FHELib.FHELib__DecryptResultNotReady.selector, guess.decryptRequestId
+                FHELib.FHELib__DecryptResultNotReady.selector, decryptRequestId
             )
         );
         game.finalizeGuess(gameId, guessId);

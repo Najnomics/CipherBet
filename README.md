@@ -1,6 +1,22 @@
 # CipherBet Protocol
 
-Production-grade monorepo for a privacy-preserving onchain guessing game using Fhenix CoFHE encrypted handles and async settlement.
+Production-grade monorepo for a privacy-preserving onchain codebreaking game using Fhenix CoFHE encrypted handles and async settlement.
+
+## How The Game Works
+
+CipherBet now uses a Mastermind-style challenge model instead of a single all-or-nothing exact-code lottery.
+
+- The creator chooses a secret 4-digit code.
+- Players submit private encrypted guesses.
+- Each resolved guess returns two clues:
+  - `exact`: correct digit in the correct position
+  - `partial`: correct digit in the wrong position
+- A challenge is solved when a player reaches `4 exact`.
+- Wrong guesses still settle economically through the slash rules configured by the creator.
+
+This makes the game solvable by deduction rather than raw luck.
+
+For the full player guide and solving strategy, see [packages/docs/how-to-play-mastermind.md](packages/docs/how-to-play-mastermind.md).
 
 ## Workspace Layout
 

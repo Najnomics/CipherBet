@@ -26,10 +26,13 @@ type Guess @entity(immutable: false) {
   challenge: Challenge!
   player: User!
   stake: BigInt!
-  decryptRequestId: BigInt!
+  exactMatchesDecryptId: BigInt!
+  partialMatchesDecryptId: BigInt!
   timestamp: BigInt!
   state: String!
   won: Boolean
+  exactMatches: Int
+  partialMatches: Int
   payout: BigInt
   slash: BigInt
   protocolFee: BigInt

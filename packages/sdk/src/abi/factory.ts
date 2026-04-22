@@ -34,6 +34,31 @@ export const challengeFactoryAbi = [
     outputs: [{ name: "gameId", type: "uint256" }],
   },
   {
+    type: "function",
+    name: "getChallengeMeta",
+    stateMutability: "view",
+    inputs: [{ name: "gameId", type: "uint256" }],
+    outputs: [
+      {
+        name: "meta",
+        type: "tuple",
+        components: [
+          { name: "creator", type: "address" },
+          { name: "createdAt", type: "uint64" },
+          { name: "deadline", type: "uint64" },
+          { name: "exists", type: "bool" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "function",
+    name: "getAllGameIds",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "gameIds", type: "uint256[]" }],
+  },
+  {
     type: "event",
     name: "GameCreated",
     inputs: [

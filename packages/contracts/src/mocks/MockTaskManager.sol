@@ -43,15 +43,71 @@ contract MockTaskManager is ITaskManager {
             return handle;
         }
 
+        if (funcId == FunctionId.select) {
+            bool condition = s_boolByHandle[encryptedInputs[0]];
+            handle = _newHandle();
+            if (returnType == Utils.EBOOL_TFHE) {
+                s_isBoolHandle[handle] = true;
+                s_boolByHandle[handle] =
+                    condition ? _boolForHandle(encryptedInputs[1]) : _boolForHandle(encryptedInputs[2]);
+            } else {
+                s_uintByHandle[handle] =
+                    condition ? s_uintByHandle[encryptedInputs[1]] : s_uintByHandle[encryptedInputs[2]];
+            }
+            return handle;
+        }
+
         if (funcId == FunctionId.trivialEncrypt) {
             handle = _newHandle();
-            s_uintByHandle[handle] = extraInputs[0];
+            if (returnType == Utils.EBOOL_TFHE) {
+                s_isBoolHandle[handle] = true;
+                s_boolByHandle[handle] = (extraInputs[0] & 1) == 1;
+            } else {
+                s_uintByHandle[handle] = extraInputs[0];
+            }
             return handle;
         }
 
         if (funcId == FunctionId.cast) {
             handle = _newHandle();
-            s_uintByHandle[handle] = s_uintByHandle[encryptedInputs[0]];
+            if (returnType == Utils.EBOOL_TFHE) {
+                s_isBoolHandle[handle] = true;
+                s_boolByHandle[handle] = _boolForHandle(encryptedInputs[0]);
+            } else {
+                s_uintByHandle[handle] = _uintForHandle(encryptedInputs[0]);
+            }
+            return handle;
+        }
+
+        if (funcId == FunctionId.add) {
+            handle = _newHandle();
+            s_uintByHandle[handle] = _uintForHandle(encryptedInputs[0]) + _uintForHandle(encryptedInputs[1]);
+            return handle;
+        }
+
+        if (funcId == FunctionId.sub) {
+            handle = _newHandle();
+            s_uintByHandle[handle] = _uintForHandle(encryptedInputs[0]) - _uintForHandle(encryptedInputs[1]);
+            return handle;
+        }
+
+        if (funcId == FunctionId.div) {
+            handle = _newHandle();
+            s_uintByHandle[handle] = _uintForHandle(encryptedInputs[0]) / _uintForHandle(encryptedInputs[1]);
+            return handle;
+        }
+
+        if (funcId == FunctionId.rem) {
+            handle = _newHandle();
+            s_uintByHandle[handle] = _uintForHandle(encryptedInputs[0]) % _uintForHandle(encryptedInputs[1]);
+            return handle;
+        }
+
+        if (funcId == FunctionId.lte) {
+            handle = _newHandle();
+            s_isBoolHandle[handle] = true;
+            s_boolByHandle[handle] =
+                _uintForHandle(encryptedInputs[0]) <= _uintForHandle(encryptedInputs[1]);
             return handle;
         }
 
@@ -231,5 +287,23 @@ contract MockTaskManager is ITaskManager {
             return s_boolByHandle[handle] ? 1 : 0;
         }
         return s_uintByHandle[handle];
+    }
+
+    function _uintForHandle(
+        uint256 handle
+    ) private view returns (uint256) {
+        if (s_isBoolHandle[handle]) {
+            return s_boolByHandle[handle] ? 1 : 0;
+        }
+        return s_uintByHandle[handle];
+    }
+
+    function _boolForHandle(
+        uint256 handle
+    ) private view returns (bool) {
+        if (s_isBoolHandle[handle]) {
+            return s_boolByHandle[handle];
+        }
+        return s_uintByHandle[handle] != 0;
     }
 }
